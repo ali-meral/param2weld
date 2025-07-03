@@ -112,8 +112,8 @@ if __name__ == "__main__":
     mid = fixed.get("mid_mode", "mean")
     mae_pct = int(fixed.get("w_mae", 0.8) * 100)
     ssim_pct = int(fixed.get("w_ssim", 0.2) * 100)
-    exp_name = f"midmode={mid}__mae{mae_pct}_ssim{ssim_pct}"
-    results_dir = Path("experiments/optuna/results") / exp_name
+    exp_name = f"mae{mae_pct}_ssim{ssim_pct}"
+    results_dir = Path("experiments/optuna/results") / mid / exp_name
     results_dir.mkdir(parents=True, exist_ok=True)
 
     # Run Optuna study
