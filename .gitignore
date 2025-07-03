@@ -1,0 +1,39 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Byte-compiled and temporary
+*.log
+*.tmp
+*.npy
+*.npz
+*.pkl
+*.json
+
+# TensorBoard logs
+logs/
+*.tfevents.*
+
+# Model files
+models/
+*.keras
+*.h5
+
+# Environment
+.venv/
+env/
+venv/
+*.egg-info/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# IDE/project files
+.vscode/
+.idea/
