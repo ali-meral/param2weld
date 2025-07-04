@@ -37,3 +37,8 @@ plt.rcParams["axes.prop_cycle"] = plt.cycler(
         "#17becf",
     ]
 )
+
+myblue = "#377eb8"
+mygreen = "#4daf4a"
+myred = "#e41a1c"
+myorange = "#ff7f00"
