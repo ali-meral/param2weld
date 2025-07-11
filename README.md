@@ -1,116 +1,98 @@
 # Param2Weld
 
-**Param2Weld** is a machine learning pipeline that predicts keyhole morphology images from laser welding parameters (velocity, power, spotsize). It uses a convolutional decoder architecture trained via k-fold cross-validation and supports ensemble prediction, TensorBoard logging, and hyperparameter tuning with Optuna.
+Param2Weld is a deep learning framework for predicting weld keyhole morphology from laser process parameters using convolutional decoder networks. It leverages simulated images to learn spatial mappings from parameters such as scan velocity, laser power, and spot size.
 
----
+## Architecture
+
+The core model is a convolutional decoder that maps three input parameters to a predicted 2D morphology image. The architecture includes dense layers, reshaping, upsampling, convolutional blocks and residual connections.
+
+![CNN Decoder Architecture](figures/network_architecture.png)
 
 ## Features
 
-* Convolutional decoder model with MAE + SSIM hybrid loss
-* K-fold cross-validation training
-* Scalable ensemble-based prediction
-* TensorBoard logging per fold
-* Hyperparameter optimization using Optuna
-* Modular codebase for dataset loading, model building, training, and evaluation
+* Input: 3D vector (velocity, power, spot size)
+* Output: 2D morphology image (e.g., 32×32 resolution)
+* Loss function: Hybrid combination of MAE and SSIM
+* Training method: k-Fold Cross-Validation with ensemble prediction
+* Configurable architecture and hyperparameters via CLI and JSON overrides
 
----
+## Installation
 
-## Project Structure
-
-```
-param2weld/
-├── config/           # Configuration (e.g. resolution, loss weights)
-├── data/             # Data loading and preprocessing
-├── models/           # CNN decoder model and custom losses
-├── predict/          # Prediction utilities and ensemble loader
-├── train/            # Training loop and callbacks
-main.py               # CLI entry point
-```
-
----
-
-## Quick Start
-
-### 1. Set up virtual environment
+We recommend using a virtual environment:
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+```
+
+Then install the required dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Train the model using CLI
+## Hyperparameter Optimization
 
-```bash
-python main.py train --data_dir /path/to/sim_folders
-```
-
-Optional arguments:
-
-* `--model_dir`: override the default model save path
-* `--params_json`: provide a JSON file to override hyperparameters (see below)
-
----
-
-### 3. Hyperparameter tuning with Optuna
-
-Run random search or fixed configuration tuning over model/training parameters using Optuna:
-
-```bash
-python -m param2weld.scripts.tune_optuna --data_dir /path/to/sim_folders --n_trials 50
-```
-
-* `--data_dir`: Path to folders named like `sim_100_300_95` containing image sequences
-* `--n_trials`: Number of trials for Optuna's random search
-
-Example using fixed parameters defined in a JSON file:
+To perform automatic hyperparameter tuning with Optuna using the provided simulation folders:
 
 ```bash
 python -m param2weld.scripts.tune_optuna \
-    --fixed_params experiments/optuna/configs/fixed_median_mae80_ssim20.json
+  --fixed_params experiments/optuna/configs/fixed_median_mae80_ssim20.json
 ```
 
-* `--fixed_params`: Path to a JSON file containing model and training hyperparameters (overrides Optuna search)
+Example output:
 
-This runs k-fold cross-validation using the specified settings and logs the results for comparison and visualization.
+```text
+[I 2025-07-11 14:12:03] Trial 0 finished with value: 0.0145 and parameters: {"dropout": 0.12, "dense_units": 1024, "f_block1": 64, "f_block2": 16, "l2_reg": 4.6e-06, "batch_size": 16}.
+[I 2025-07-11 14:23:17] Trial 1 finished with value: 0.0151 and parameters: {"dropout": 0.0, "dense_units": 512, "f_block1": 32, "f_block2": 16, "l2_reg": 1e-05, "batch_size": 8}.
+...
+Best hyperparameters saved to: experiments/optuna/results/median/mae80_ssim20/best_hyperparams_2025-07-11_14-45-02.json
+```
 
----
-
-## Important Parameters (from `config.py` and Optuna space)
-
-| Parameter        | Description                                | Default   |
-| ---------------- | ------------------------------------------ | --------- |
-| `resolution`     | Output image size (e.g., 32×32)            | 32        |
-| `w_mae`          | Weight of MAE in hybrid loss               | 0.8       |
-| `w_ssim`         | Weight of SSIM in hybrid loss              | 0.2       |
-| `dense_units`    | Size of dense layer (must match reshaping) | 512       |
-| `dropout`        | Dropout rate after dense layer             | 0.0–0.3   |
-| `filters_block1` | Filters in first conv block                | 16–64     |
-| `filters_block2` | Filters in second conv block               | 8–32      |
-| `learning_rate`  | Learning rate for Adam optimizer           | 1e-4–3e-4 |
-| `batch_size`     | Batch size for training                    | 8–32      |
-| `kfold_splits`   | Number of folds for cross-validation       | 10        |
-
----
-
-## TensorBoard
-
-Training logs are saved per fold in a timestamped directory. To view (example shown below):
+Configuration files are located in:
 
 ```bash
-tensorboard --logdir logs/mean/20250703-194233
+experiments/optuna/configs/
 ```
 
-This command assumes a run under `logs/mean/<timestamp>` — update the path based on your specific run directory.
+## Training
 
-TensorBoard displays validation loss, MAE, RMSE, and SSIM metrics across all folds.
+To initiate training with cross-validation:
 
----
+```bash
+python -m main train \
+  --data_dir path/to/simulations \
+  --model_dir path/to/save/models \
+  --params_json custom_params.json
+```
 
-## Design Notes
+Each training fold saves:
 
-* **Model**: The decoder transforms a 3D parameter vector into a 32×32 image using upsampling and convolutional layers.
-* **Loss Function**: A hybrid of MAE and SSIM is used to balance pixel-level accuracy and structural fidelity.
-* **Data Handling**: Simulation folders are named like `sim_100_300_95`, from which average keyhole images are computed across a selected time window.
-* **Scalability**: Ensemble prediction is built-in, averaging over all trained fold models.
-* **Reproducibility**: Each fold logs its config and results. The fold assignments are saved for validation consistency.
+* The trained model (`.keras`)
+* Training history (`.npy`)
+* Input scaler (`.pkl`)
+* TensorBoard logs for monitoring
+
+## Data Structure
+
+Each simulation folder (e.g., `sim_0.58_534_96`) must contain a resolution-specific subfolder (e.g., `32/`) with grayscale PNG images representing the simulation output.
+
+## Inference
+
+To generate predictions after training:
+
+```python
+from param2weld.predict.predictor import generate_prediction_image
+```
+
+Load the trained ensemble and input scaler, then run:
+
+```python
+img = generate_prediction_image(velocity, power, spot_size, scaler, ensemble_models)
+```
+
+The output is a normalized 2D array representing the predicted morphology.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
