@@ -1,0 +1,5 @@
+{
+  "mid_mode": "median",
+  "w_mae": 0.8,
+  "w_ssim": 0.2
+}

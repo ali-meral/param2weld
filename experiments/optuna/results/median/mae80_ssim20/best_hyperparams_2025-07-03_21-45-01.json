@@ -1,0 +1,11 @@
+{
+  "dropout": 0.035578962488306054,
+  "dense_units": 4096,
+  "f_block1": 64,
+  "f_block2": 16,
+  "l2_reg": 3.2358178572837686e-06,
+  "batch_size": 8,
+  "mid_mode": "median",
+  "w_mae": 0.8,
+  "w_ssim": 0.2
+}
