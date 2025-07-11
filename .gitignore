@@ -10,14 +10,13 @@ __pycache__/
 *.npy
 *.npz
 *.pkl
-*.json
 
 # TensorBoard logs
 logs/
 *.tfevents.*
 
 # Model files
-models/
+/models/
 *.keras
 *.h5
 
@@ -39,3 +38,4 @@ Thumbs.db
 .idea/
 
 figures/
+notebooks/
