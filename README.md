@@ -91,7 +91,40 @@ Load the trained ensemble and input scaler, then run:
 img = generate_prediction_image(velocity, power, spot_size, scaler, ensemble_models)
 ```
 
-The output is a normalized 2D array representing the predicted morphology.
+To generate predictions after training (minimal working example):
+
+```python
+from pathlib import Path
+import matplotlib.pyplot as plt
+import numpy as np
+
+from param2weld.predict.ensemble import load_ensemble_models, predict_ensemble
+from param2weld.data.scaler import load_scaler
+
+# Configuration
+model_dir = Path("models/mean/mae80_ssim20")
+params = np.array([[0.96, 450, 95]])  # velocity, power, spotsize
+
+# Load ensemble models and scalers
+ensemble_models = load_ensemble_models(model_dir)
+scalers = [load_scaler(model_dir / f"scaler_fold_{i}.pkl") for i in range(10)]
+
+# Average input scaling across folds
+input_scaled = np.mean([scaler.transform(params) for scaler in scalers], axis=0)
+
+# Predict morphology
+prediction = predict_ensemble(ensemble_models, input_scaled)
+img = prediction[0, :, :, 0]
+
+# Display the result
+plt.imshow(img, cmap="gray", vmin=0, vmax=1)
+plt.axis("off")
+plt.show()
+```
+
+This produces a normalized 2D array representing the predicted morphology image.
+
+![Prediction Example](figures/prediction_example.png)
 
 ## License
 
